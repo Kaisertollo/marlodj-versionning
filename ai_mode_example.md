@@ -12,47 +12,45 @@
 | Annulation d'une création en cours (bouton « Annuler ») | Aucun utilisateur n'est créé, la carte affiche « Création annulée » |
 | Double clic sur « Confirmer la création » | Une seule création est effectuée, pas de doublon |
 | Après confirmation réussie | Le mot de passe généré n'apparaît qu'à ce moment, jamais avant |
+# Prompts de transfert — avec utilisateurs réellement existants
 
-## Transfert / affectation en une phrase
+## Utilisateurs confirmés en base (vérifiés via "Gestion des Utilisateurs")
+- Khadija Ba — khadija.ba2@exemple.com — Ecobank UCAD — actuellement au GUICHET 2
+- Fatou Sarr — fatou.sarr@exemple.com — Ecobank UCAD — sans guichet actuellement
+- Ousmane Ndoye — ousmane.ndoye@exemple.com — Ecobank UCAD — sans guichet actuellement
+- Modou Fall — nomseul@exemple.com — Ecobank UCAD — sans guichet actuellement
+- Awa Deme — awa.deme@exemple.com — Ecobank UCAD — sans guichet actuellement
+- Awa Deme — awa.deme2@exemple.com — Agence Principale — sans guichet actuellement
 
-| Prompt | Comportement observé |
-|---|---|
-| `Attribue la tablette du CSO n°2 à agent@exemple.com` | « tablette » et « CSO » correctement compris comme guichet / service Clientèle |
-| `Affecte agent@exemple.com à la tablette 2 du CSO` | Idem, résolution correcte du vocabulaire métier |
-| `Transfère fatou.sarr@exemple.com au guichet Clientele 2 de l'agence Ecobank Roume` | Agent, agence et guichet correctement résolus ; guichet occupé détecté avant toute écriture |
+## État réel des guichets à Ecobank UCAD (vérifié via "Gestion des Assignations")
+- GUICHET 2 (GIC_UCAD_1) → occupé par Khadija Ba
+- caisse 2 → **vide** (libre)
+- fsdgxgx (service Clientèle) → occupé par sokhna samb (agent existant hors périmètre de test)
 
-## Gestion des cas ambigus et erreurs
+---
 
-| Prompt | Comportement observé |
-|---|---|
-| `Affecte fatou.sarr@exemple.com au guichet 2` (sans agence précisée) | Demande explicitement de choisir l'agence, car plusieurs agences ont un « guichet 2 » |
-| `Affecte Fatou Sarr au guichet 3 de l'agence UCAD` (nom sans e-mail) | Résout le nom unique sans ambiguïté, puis signale correctement l'absence de guichet 3 à cette agence (« Aucun guichet actif ne correspond à cette demande ») |
-| `Affecte Awa Deme (fatou.sarr@exemple.com) au guichet 1 de l'agence UCAD` (nom et e-mail contradictoires) | Détecte la contradiction et tranche explicitement : « Le nom indiqué correspond à Awa Deme, mais l'email désigne Fatou Sarr. L'email est retenu. » |
-| `Affecte fatou.sarr@exemple.com à l'agence UCAD` (sans guichet précisé) | Demande explicitement le guichet cible avec un exemple concret |
-| E-mail totalement inconnu du système | Message d'erreur clair, aucun blocage silencieux |
-| `Affecte Diop au guichet 2` (nom ambigu) | Propose une liste de tous les agents nommés Diop pour sélection explicite |
+## Prompts vers un guichet libre (transfert simple, aucun conflit attendu)
+- Affecte fatou.sarr@exemple.com au guichet caisse 2 de l'agence Ecobank UCAD
+- Transfère ousmane.ndoye@exemple.com vers le guichet caisse 2 de l'agence Ecobank UCAD
+- Attribue le guichet caisse 2 à nomseul@exemple.com dans l'agence Ecobank UCAD
 
-## Guichet occupé
+## Prompts vers un guichet occupé (déclenche le choix Remplacer / Réaffecter)
+- Affecte fatou.sarr@exemple.com au guichet 2 de l'agence Ecobank UCAD
+- Transfère ousmane.ndoye@exemple.com vers le guichet 2 de l'agence Ecobank UCAD
+- Affecte nomseul@exemple.com au guichet Clientele de l'agence Ecobank UCAD
 
-| Prompt / action | Comportement observé |
-|---|---|
-| Transfert vers un guichet déjà occupé | Le système affiche systématiquement « Guichet occupé par [email]. Que faire ? » avec deux choix : « Remplacer sans réaffecter » / « Réaffecter la personne » |
-| Choix « Remplacer sans réaffecter » | Dry-run puis confirmation requise avant toute écriture réelle |
-| Annulation après affichage de l'aperçu | Aucune affectation n'est modifiée |
+## Prompt déplaçant un utilisateur déjà affecté (Khadija Ba, actuellement au GUICHET 2)
+- Transfère khadija.ba2@exemple.com vers le guichet caisse 2 de l'agence Ecobank UCAD
+- Déplace khadija.ba2@exemple.com au guichet Clientele de l'agence Ecobank UCAD
 
-## Affectation après création (pronoms)
+## Prompt entre deux agences (Awa Deme, Agence Principale → Ecobank UCAD)
+- Transfère awa.deme2@exemple.com vers l'agence Ecobank UCAD, guichet caisse 2
 
-| Prompt | Comportement observé |
-|---|---|
-| Créer un utilisateur, puis : `Maintenant affecte-le au guichet 2 de l'agence UCAD` | Le pronom « le » a été correctement résolu vers le dernier utilisateur créé (Khadija Ba), sans redemander l'agent |
+## Prompt avec nom seul (sans e-mail), en s'appuyant sur un nom unique confirmé
+- Affecte Fatou Sarr au guichet caisse 2 de l'agence Ecobank UCAD
+- Affecte Khadija Ba au guichet caisse 2 de l'agence Ecobank UCAD
 
-> Remarque : ce cas a échoué dans une autre tentative (voir rapport de bugs) — le comportement n'est pas garanti à 100 %, mais fonctionne dans les conditions ci-dessus.
-
-## Sécurité et fiabilité
-
-| Action | Comportement observé |
-|---|---|
-| Annuler une création | Aucun compte n'est créé en base |
-| Annuler un aperçu de transfert | Aucune affectation n'est modifiée |
+## Prompt avec vocabulaire métier + utilisateur réel
+- Affecte ousmane.ndoye@exemple.com à la tablette 2 du CSO à l'agence Ecobank UCAD
 | Double-clic sur confirmation | Une seule opération est réellement exécutée |
 | Utilisateur créé et confirmé (Khadija Ba) | Visible avec la bonne agence (Ecobank UCAD) après création |
